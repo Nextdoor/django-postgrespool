@@ -8,10 +8,17 @@ from sqlalchemy.pool import manage, QueuePool
 from psycopg2 import InterfaceError, ProgrammingError, OperationalError
 
 from django.conf import settings
-from django.db.backends.postgresql_psycopg2.base import *
-from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper as Psycopg2DatabaseWrapper
-from django.db.backends.postgresql_psycopg2.base import CursorWrapper as DjangoCursorWrapper
-from django.db.backends.postgresql_psycopg2.creation import DatabaseCreation as Psycopg2DatabaseCreation
+
+if getattr(settings, 'DATABASE_POOL_POSTGIS', False):
+    from django.contrib.gis.db.backends.postgis.base import *
+    from django.contrib.gis.db.backends.postgis.base import DatabaseWrapper as BaseDatabaseWrapper
+    from django.contrib.gis.db.backends.postgis.base import CursorWrapper as DjangoCursorWrapper
+    from django.contrib.gis.db.backends.postgis.creation import DatabaseCreation as BaseDatabaseCreation
+else:
+    from django.db.backends.postgresql_psycopg2.base import *
+    from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper as BaseDatabaseWrapper
+    from django.db.backends.postgresql_psycopg2.base import CursorWrapper as DjangoCursorWrapper
+    from django.db.backends.postgresql_psycopg2.creation import DatabaseCreation as BaseDatabaseCreation
 
 POOL_SETTINGS = 'DATABASE_POOL_ARGS'
 
@@ -93,14 +100,14 @@ class CursorWrapper(DjangoCursorWrapper):
             raise utils.DatabaseError, utils.DatabaseError(*tuple(e)), sys.exc_info()[2]
 
 
-class DatabaseCreation(Psycopg2DatabaseCreation):
+class DatabaseCreation(BaseDatabaseCreation):
     def destroy_test_db(self, *args, **kw):
         """Ensure connection pool is disposed before trying to drop database."""
         self.connection._dispose()
         super(DatabaseCreation, self).destroy_test_db(*args, **kw)
 
 
-class DatabaseWrapper(Psycopg2DatabaseWrapper):
+class DatabaseWrapper(BaseDatabaseWrapper):
     """SQLAlchemy FTW."""
 
     def __init__(self, *args, **kwargs):

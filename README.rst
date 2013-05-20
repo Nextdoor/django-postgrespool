@@ -33,6 +33,12 @@ If you're using `south <http://south.aeracode.org>`_:
         'default': 'south.db.postgresql_psycopg2'
     }
 
+If you use PostGIS (django.contrib.gis.db.backends.postgis):
+
+::
+
+    DATABASE_POOL_POSTGIS = True
+
 
 Everything should work as expected.
 
