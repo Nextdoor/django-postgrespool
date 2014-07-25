@@ -115,7 +115,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.creation = DatabaseCreation(self)
 
     def _cursor(self):
-        if self.connection is None:
+        if self.connection is None or self.connection.is_valid == False:
             self.connection = db_pool.connect(**self._get_conn_params())
             self.connection.set_client_encoding('UTF8')
             tz = 'UTC' if settings.USE_TZ else self.settings_dict.get('TIME_ZONE')
@@ -140,6 +140,14 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         cursor = self.connection.cursor()
         cursor.tzinfo_factory = utc_tzinfo_factory if settings.USE_TZ else None
         return CursorWrapper(cursor, self.connection)
+
+    def _commit(self):
+        if self.connection is not None and self.connection.is_valid:
+            return self.connection.commit()
+
+    def _rollback(self):
+        if self.connection is not None and self.connection.is_valid:
+            return self.connection.rollback()
 
     def _dispose(self):
         """Dispose of the pool for this instance, closing all connections."""
